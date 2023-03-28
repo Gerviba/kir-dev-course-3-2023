@@ -8,6 +8,8 @@ import hu.kirdev.webshop.repo.ProductRepo
 import hu.kirdev.webshop.repo.PurchaseRepo
 import hu.kirdev.webshop.repo.UserRepo
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 open class WebshopService(
@@ -17,22 +19,26 @@ open class WebshopService(
     private val userRepo: UserRepo
 ) {
 
-    fun getAllProducts(): List<ProductEntity> {
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    open fun getAllProducts(): List<ProductEntity> {
         return productRepo.findAll().toList()
     }
 
-    fun getPurchasesByUser(id: Long): List<PurchaseEntity> {
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    open fun getPurchasesByUser(id: Long): List<PurchaseEntity> {
         return purchaseRepo.findAllByUserId(id)
     }
 
-    fun createProduct(productEntity: ProductEntity, items: List<ItemEntity>) {
+    @Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+    open fun createProduct(productEntity: ProductEntity, items: List<ItemEntity>) {
         productRepo.save(productEntity)
         productEntity.items.addAll(items)
         items.forEach { item -> item.product = productEntity }
         itemRepo.saveAll(items)
     }
 
-    fun hasProducts(): Boolean {
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    open fun hasProducts(): Boolean {
         return productRepo.count() > 0
     }
 
@@ -46,7 +52,8 @@ open class WebshopService(
         OK(success = true, message = "Item purchased successfully!")
     }
 
-    fun buyProduct(userId: Long, productId: Long): PurchaseStatus {
+    @Transactional(readOnly = false, isolation = Isolation.SERIALIZABLE)
+    open fun buyProduct(userId: Long, productId: Long): PurchaseStatus {
         val user = userRepo.findById(userId).orElse(null)
             ?: return PurchaseStatus.UNKNOWN_USER
 

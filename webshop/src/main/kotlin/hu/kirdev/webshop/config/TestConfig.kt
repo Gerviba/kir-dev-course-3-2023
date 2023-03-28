@@ -13,6 +13,8 @@ class TestConfig(
 
     @PostConstruct
     fun createKits() {
+        println(webshopService.javaClass.name)
+
         if (webshopService.hasProducts())
             return
 

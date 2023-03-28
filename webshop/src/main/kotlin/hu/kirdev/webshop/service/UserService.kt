@@ -4,20 +4,24 @@ import hu.kirdev.webshop.authsch.ProfileResponse
 import hu.kirdev.webshop.model.UserEntity
 import hu.kirdev.webshop.repo.UserRepo
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 open class UserService(
     private val userRepo: UserRepo
 ) {
 
-    fun setUsername(id: Long, username: String) {
+    @Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+    open fun setUsername(id: Long, username: String) {
         userRepo.findById(id).ifPresent {
             it.minecraftUsername = username
             userRepo.save(it)
         }
     }
 
-    fun getOrCreateUser(profile: ProfileResponse): Long {
+    @Transactional(readOnly = false, isolation = Isolation.SERIALIZABLE)
+    open fun getOrCreateUser(profile: ProfileResponse): Long {
         return userRepo.findByInternalId(profile.internalId)
             .map { it.id }
             .orElseGet {
@@ -30,7 +34,8 @@ open class UserService(
             }
     }
 
-    fun getUserById(id: Long): UserEntity {
+    @Transactional(readOnly = true, isolation = Isolation.READ_COMMITTED)
+    open fun getUserById(id: Long): UserEntity {
         return userRepo.findById(id).orElseThrow()
     }
 
